@@ -71,17 +71,35 @@ public class OrdemServicoEntity {
     @OneToMany(mappedBy = "ordemServico", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AnexoEntity> anexos = new ArrayList<>();
 
-    public OrdemServicoEntity(String numeroProtocolo, ClienteEntity cliente, EquipamentoEntity equipamento, String descricaoProblema) {
-        if (!cliente.isAtivo()) {
-            throw new RegraNegocioException("Não é permitido abrir Ordem de Serviço para um cliente inativo.");
+    public OrdemServicoEntity(String numeroProtocolo, ClienteEntity cliente,
+                              EquipamentoEntity equipamento, String descricaoProblema) {
+        if (cliente == null) {
+            throw new IllegalArgumentException("O cliente é obrigatório.");
         }
+        if (equipamento == null) {
+            throw new IllegalArgumentException("O equipamento é obrigatório.");
+        }
+        if (!cliente.isAtivo()) {
+            throw new RegraNegocioException(
+                    "Não é permitido abrir Ordem de Serviço para um cliente inativo.");
+        }
+        if (equipamento.getCliente() == null
+                || equipamento.getCliente().getId() == null
+                || !equipamento.getCliente().getId().equals(cliente.getId())) {
+            throw new RegraNegocioException(
+                    "O equipamento informado não pertence ao cliente indicado.");
+        }
+
         this.numeroProtocolo = numeroProtocolo;
         this.cliente = cliente;
         this.equipamento = equipamento;
         this.descricaoProblema = descricaoProblema;
         this.status = StatusOrdemServico.RECEBIDA;
-        this.dataAbertura = LocalDateTime.now();
-        adicionarHistorico(null, StatusOrdemServico.RECEBIDA, "SISTEMA", "Abertura da ordem de serviço.");
+
+        LocalDateTime abertura = LocalDateTime.now();
+        this.dataAbertura = abertura;
+        adicionarHistorico(null, StatusOrdemServico.RECEBIDA, "SISTEMA",
+                "Abertura da ordem de serviço.", abertura);
     }
 
     public void atribuirTecnico(TecnicoEntity tecnico, String responsavel) {
@@ -178,8 +196,15 @@ public class OrdemServicoEntity {
         adicionarHistorico(anterior, novoStatus, responsavel, observacao);
     }
 
-    private void adicionarHistorico(StatusOrdemServico anterior, StatusOrdemServico novo, String responsavel, String observacao) {
-        HistoricoStatusEntity entrada = new HistoricoStatusEntity(this, anterior, novo, responsavel, observacao);
+    private void adicionarHistorico(StatusOrdemServico anterior, StatusOrdemServico novo,
+                                    String responsavel, String observacao) {
+        adicionarHistorico(anterior, novo, responsavel, observacao, LocalDateTime.now());
+    }
+
+    private void adicionarHistorico(StatusOrdemServico anterior, StatusOrdemServico novo,
+                                    String responsavel, String observacao, LocalDateTime dataAlteracao) {
+        HistoricoStatusEntity entrada = new HistoricoStatusEntity(
+                this, anterior, novo, responsavel, observacao, dataAlteracao);
         this.historico.add(entrada);
     }
 }
