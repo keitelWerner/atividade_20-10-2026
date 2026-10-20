@@ -40,11 +40,17 @@ public class HistoricoStatusEntity {
 
     public HistoricoStatusEntity(OrdemServicoEntity ordemServico, StatusOrdemServico statusAnterior,
                                  StatusOrdemServico novoStatus, String responsavel, String observacao) {
+        this(ordemServico, statusAnterior, novoStatus, responsavel, observacao, LocalDateTime.now());
+    }
+
+    public HistoricoStatusEntity(OrdemServicoEntity ordemServico, StatusOrdemServico statusAnterior,
+                                 StatusOrdemServico novoStatus, String responsavel, String observacao,
+                                 LocalDateTime dataAlteracao) {
         this.ordemServico = ordemServico;
         this.statusAnterior = statusAnterior;
         this.novoStatus = novoStatus;
         this.responsavel = responsavel;
         this.observacao = observacao;
-        this.dataAlteracao = LocalDateTime.now();
+        this.dataAlteracao = dataAlteracao;
     }
 }
